@@ -11,9 +11,10 @@ library(randomForest)
 library(devtools)
 library(bounceR)
 library(xgboost)
+library(FSelector)
 
 rm(list = ls())
-setwd("~/R files/Machine Learning/Projekt 2 - ZMUM")
+setwd("~/Studia IAD/Projekt 2 ZMUM/Machine-Learning/FeatureSelection")
 
 source("functions.R")
 
@@ -42,21 +43,26 @@ test <- normalization(test)
 
 # feature selection
 
-## filtering
+## filtering in bouncer
+# 
+# features_names <- featureFiltering(data = cbind(y = train_lab, train),
+#                             target = "y",
+#                             method = "cc",
+#                             returning = "names")
+# 
+# indices <- indices_fun(train, feature_names)
+# train <- train[ , -indices]
+# test <- test[ , -indices]
 
-features_names <- featureFiltering(data = cbind(y = train_lab, train),
-                            target = "y",
-                            method = "cc",
-                            returning = "names")
+# information gain
 
-indices <- integer(length(features_names))
-for (j in seq(length(features_names))) {
-  indices[j] <- which(colnames(train) == features_names[i])
-}
-indices <- sort(indices)
+weights <- information.gain(y ~ ., data.frame(cbind(train, y = train_lab)))
+subset <- cutoff.k(weights, 6)
+indices <- indices_fun(train, subset)
+train[, subset]
 
-train <- train[ , -indices]
-test <- test[ , -indices]
+
+
 
 
 # fitting model
@@ -70,15 +76,15 @@ fit_glm <- glm(data = d, formula = y ~ . , family = "binomial")
 
 # prediction
 
-p_xgb <-  predict(fit_xgb, newdata = data.matrix(test))
-predicted_classes_xgb <- ifelse( p_xgb > thresh, 1, 0)
+pred_xgb <-  predict(fit_xgb, newdata = data.matrix(test))
+predicted_classes_xgb <- ifelse( pred_xgb > thresh, 1, 0)
 bcs_xgb[i] <- balanced_acc(predicted_classes_xgb, test_lab)
 print(paste0("Balanced accuraccy (xgb) after ", i , "/", cv_num, " fold CV: ", bcs_xgb[i]))
 
 pred_glm <- predict(fit_glm, newdata = data.frame(test), type = "response")
-predicted_classes_glm <- ifelse( p_xgb > thresh, 1, 0)
+predicted_classes_glm <- ifelse( pred_glm > thresh, 1, 0)
 bcs_glm[i] <- balanced_acc(predicted_classes_glm, test_lab)
-print(paste0("Balanced accuraccy (glm) after ", i , "/", cv_num, " fold CV: \n", bcs_glm[i]))
+print(paste0("Balanced accuraccy (glm) after ", i , "/", cv_num, " fold CV: ", bcs_glm[i]))
 }
 
 print(paste0("Balanced [xgb] accuraccy after ", cv_num, " fold CV: ", mean(bcs_xgb)))
