@@ -23,7 +23,7 @@ drzewo <- function(formula, data, ...){
 }
 
 library(foreign)
-dane <- read.arff("diabetes.arff")
+dane <- read.arff("../data/diabetes.arff")
 
 
 # porownanie jakosci klasyfikacji baggingu drzew i pojedynczego drzewa 
@@ -66,7 +66,7 @@ library(rpart)
 library(foreign)
 library(adabag)
 
-dane <- read.arff("diabetes.arff")
+dane <- read.arff("../data/diabetes.arff")
 
 bagging_drzew <- function(formula, data, B = 100, ...){
   drzewa <- vector("list", B)

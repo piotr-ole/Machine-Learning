@@ -5,6 +5,7 @@ library(rpart.plot)
 library(ggplot2)
 library(dplyr)
 
+source('../Functions/functions.R')
 
 # Zadanie nr 1
 setwd("C:/Users/piotr/Desktop/Github- projects/Machine-Learning/Laboratoria ZMUM/DecisionTrees")
@@ -62,7 +63,7 @@ plt
 head(dat)
 #dat$popn <- ifelse(dat$popn == 'equake', 1, 0)
 tree <-  rpart(formula = as.factor(popn) ~ body + surface, data = dat,
-               control = rpart.control(minsplit = 15))
+               control = rpart.control(minsplit = 5))
 summary(tree)
 rpart.plot(tree)
 
