@@ -14,7 +14,7 @@ library(xgboost)
 library(FSelector)
 
 rm(list = ls())
-setwd("~/Studia IAD/Projekt 2 ZMUM/Machine-Learning/FeatureSelection")
+setwd("C:/Users/piotr/Desktop/Github- projects/Machine-Learning/FeatureSelection")
 
 source("functions.R")
 
@@ -40,6 +40,9 @@ test_lab <- dat_labels[-samp]
 
 train <- normalization(train)
 test <- normalization(test)
+
+
+fit_rf = randomForest(diabetes~., data=data_lm)
 
 # feature selection
 
