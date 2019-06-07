@@ -106,13 +106,62 @@ for (j in seq(2,20)) {
   print(paste0(j, ": Balanced accuraccy (xgb) after cross-val: ",mean(bcs_xgb)))
 }
 
-################## BORUTA FEATURE SELECTION ################################
-library(Boruta)
+################## GLM FEATURE SELECTION ################################
 
+glm.fit <- glm(class ~. , data = cbind(dat, class = dat_labels))
 
-boruta_output <- Boruta(as.factor(class) ~. , data=cbind(dat, class = dat_labels), doTrace=2)
-boruta_signif <- names(boruta_output$finalDecision[boruta_output$finalDecision %in% c("Confirmed", "Tentative")])  # collect Confirmed and Tentative variables
-print(boruta_signif) 
+vars_importance <- varImp(glm.fit)
+vars_names <- rownames(vars_importance)
+ord <- order(vars_importance$Overall, decreasing = TRUE)
+vars_importance <- vars_importance$Overall[ord]
+vars_names <- vars_names[ord]
+
+vars_names[1:10]
+
+cv_num <- 5
+rep <- 5
+nsize <- nrow(dat) / cv_num
+
+for (j in seq(2,10)) {
+  
+  samp <- sample(nrow(dat), replace = FALSE)
+  dt <- dat[samp, ]
+  dt_labels <- dat_labels[samp]
+  bcs_glm = numeric(cv_num)
+  for (i in seq(0, cv_num - 1)) {
+    ind <- (nsize*i + 1):(nsize*(i+1))
+    train <- dt[-ind, ]
+    test <- dt[ind, ]
+    train_lab <- dt_labels[-ind]
+    test_lab <- dt_labels[ind]
+    glm.model <- glm(class ~. , data = data.frame(train[,vars_names[1:j]], class = train_lab))
+    pred <- predict(glm.model, newdata = test[, vars_names[1:j]], type = 'response')
+    classes_pred <- ifelse(pred > 0.5, 1, 0)
+    bcs_glm[i + 1] <- balanced_acc(classes_pred, test_lab)
+  }
+  print(paste0(j, ": Balanced accuraccy (xgb) after cross-val: ",mean(bcs_glm)))
+}
+
+varImpPlot(vars_importance)
+
+library(earth)
+marsModel <- earth(class ~. , data = cbind(dat, class = dat_labels)) # build model
+ev <- evimp(marsModel) 
+vars_names <- rownames(ev)
+
+ind <- sample(nrow(dat), 0.8 *nrow(dat))
+train <- dat[ind , vars_names]
+test <- dat[-ind, vars_names]
+marsModel <- earth(class ~. , data = cbind(train, class = dat_labels[ind]))
+pred <- predict(marsModel, newdata = test)
+classes_pred <- ifelse(pred > 0.5, 1 , 0)
+balanced_acc(classes_pred, dat_labels[-ind])
+
+vars_names <- rownames(ev)
+
+#boruta_output <- Boruta(as.factor(class) ~. , data=cbind(dat, class = dat_labels), doTrace=2)
+#boruta_signif <- names(boruta_output$finalDecision[boruta_output$finalDecision %in% c("Confirmed", "Tentative")])  # collect Confirmed and Tentative variables
+#print(boruta_signif) 
 
 
 
